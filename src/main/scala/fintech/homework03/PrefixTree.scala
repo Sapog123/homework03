@@ -18,19 +18,21 @@ trait PrefixTree[K, +V] {
 class Tree[K, +V](val value: Option[V],val trees: Map[K, Tree[K, V]]) extends PrefixTree[K, V] {
 
   def put[U >: V](path: Seq[K], value: U): Tree[K, U] = {
-    if (path.isEmpty) new Tree[K, U](Some[U](value),trees)
+    if (path.isEmpty) new Tree[K, U](Some[U](value), Map.empty)
     else if (trees.contains(path.head)) {
       val subTree = trees(path.head).put(path.tail, value)
-      new Tree(this.value,trees + (path.head -> subTree))
+      new Tree(this.value, trees+(path.head -> subTree))
     }
-    else new Tree[K, U]( this.value,trees + (path.head -> put(path.tail, value)),)
+
+   else{
+      new Tree[K, U](this.value,Map(path.head -> this.put(path.tail, value)))
+    }
   }
 
   override def hashCode(): Int = {
-    val prime = 97
+    val prime = 21
     var hash = 1
-    hash = prime * hash + trees.hashCode()
-    hash = prime * hash + value.hashCode()
+    hash = prime * value.hashCode() + trees.hashCode()
     hash
   }
 
@@ -45,8 +47,16 @@ class Tree[K, +V](val value: Option[V],val trees: Map[K, Tree[K, V]]) extends Pr
     if (path.isEmpty) this
     else if (trees.contains(path.head))
       trees(path.head).sub(path.tail)
-    else new Tree[K, V](None,Map.empty)
+    else new Tree[K, V](None, Map.empty)
   }
 
-  def get: V = value.get
+  def get: V = {
+   //val v = value.getOrElse()
+    value.isEmpty match {
+      case false => value.get
+      case true => throw new NoSuchElementException
+    }
+
+
+  }
 }
